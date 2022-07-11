@@ -44,7 +44,18 @@ switch (command) {
 }
 
 function treeFn(dirPath) {
-  console.log("Tree command implemented for ", dirPath);
+  if (dirPath == undefined) {
+    console.log("Kindly enter the path");
+    return;
+  } else {
+    let doesExist = fs.existsSync(dirPath);
+    if (doesExist) {
+      treeHelper(dirPath);
+    } else {
+      console.log("Kindly enter the correct path");
+      return;
+    }
+  }
 }
 
 function organizeFn(dirPath) {
@@ -86,6 +97,8 @@ function organizeHelper(src, dest) {
       //4
       let category = getCategory(childNames[i]);
       console.log(childNames[i] + " belongs to ->> " + category);
+      //4. Copy/cut files to that organized directory inside of any category folder
+      sendFiles(childAddress, dest, category);
     }
   }
 }
@@ -115,4 +128,35 @@ function getCategory(name) {
   }
 
   return "others";
+}
+
+function sendFiles(srcFilePath, dest, category) {
+  let categoryPath = path.join(dest, category);
+  if (fs.existsSync(categoryPath) == false) {
+    fs.mkdirSync(categoryPath);
+  }
+
+  let fileName = path.basename(srcFilePath);
+  let destFilePath = path.join(categoryPath, fileName);
+  fs.copyFileSync(srcFilePath, destFilePath);
+  fs.unlinkSync(srcFilePath);
+  //The empty file is first created at the destination and then the data is copied to the empty file
+  console.log(fileName, " copied to ", category);
+}
+
+function treeHelper(dirPath, indent) {
+  //is File or Folder
+  let isFile = fs.lstatSync(dirPath).isFile();
+  if (isFile == true) {
+    let fileName = path.basename(dirPath);
+    console.log(indent + "------" + fileName);
+  } else {
+    let dirName = path.basename(dirPath);
+    console.log(indent + "------" + dirName);
+    let childrens = fs.readdirSync(dirPath);
+    for (let i = 0; i < childrens.length; i++) {
+      let childPath = path.join(dirPath, childrens[i]);
+      treeHelper(childPath, indent + "\t");
+    }
+  }
 }
